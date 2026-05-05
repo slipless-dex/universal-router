@@ -1,0 +1,31 @@
+{
+  "name": "@slipless/universal-router",
+  "version": "0.1.0",
+  "description": "Multi-step swap router for Slipless. Solidity contracts that execute encoded command batches across V2, V3, and perps.",
+  "license": "MIT",
+  "author": "Slipless Labs",
+  "homepage": "https://slipless.xyz",
+  "repository": { "type": "git", "url": "git+https://github.com/slipless-dex/universal-router.git" },
+  "type": "module",
+  "main": "./ts/dist/index.cjs",
+  "module": "./ts/dist/index.js",
+  "types": "./ts/dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./ts/dist/index.d.ts",
+      "import": "./ts/dist/index.js",
+      "require": "./ts/dist/index.cjs"
+    },
+    "./artifacts/*": "./out/*"
+  },
+  "files": ["src", "ts/src", "ts/dist", "foundry.toml", "remappings.txt", "README.md", "LICENSE"],
+  "scripts": {
+    "build:contracts": "forge build",
+    "test:contracts": "forge test -vv",
+    "build:ts": "cd ts && tsup",
+    "build": "npm run build:contracts && npm run build:ts",
+    "test": "forge test"
+  },
+  "dependencies": { "@slipless/router-sdk": "^0.2.0", "viem": "^2.21.0" },
+  "devDependencies": { "tsup": "^8.3.0", "typescript": "^5.6.2", "vitest": "^2.1.2" }
+}
