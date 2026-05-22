@@ -7,15 +7,6 @@ import {V3SwapModule} from "./modules/V3SwapModule.sol";
 import {PerpFillModule} from "./modules/PerpFillModule.sol";
 import {NativeModule} from "./modules/NativeModule.sol";
 
-/**
- * @notice Decodes a single command and dispatches it to the matching module.
- *         Each command's `inputs[i]` blob is opaque to this contract and
- *         abi-decoded by the module that owns the opcode.
- *
- *         Modules are inherited so the dispatcher has direct access to
- *         their internal helpers — `delegatecall` would shred reentrancy
- *         guards, and `staticcall` would prevent state changes.
- */
 abstract contract Dispatcher is V2SwapModule, V3SwapModule, PerpFillModule, NativeModule {
     error InvalidCommand(uint256 command);
     error CommandFailed(uint256 commandIdx, bytes data);

@@ -9,6 +9,9 @@ interface IWETH {
 }
 
 abstract contract NativeModule {
+    error InsufficientNative();
+    error NativeSendFailed();
+
     address public immutable weth;
 
     constructor(address weth_) {
@@ -25,12 +28,10 @@ abstract contract NativeModule {
 
     function _unwrapNative(bytes calldata inputs) internal {
         (address recipient, uint256 amountMin) = abi.decode(inputs, (address, uint256));
-        // Read full WETH balance held by this contract.
         uint256 bal = IWETH(weth).balanceOf(address(this));
-        require(bal >= amountMin, "NativeModule: insufficient");
+        if (bal < amountMin) revert InsufficientNative();
         IWETH(weth).withdraw(bal);
         (bool ok,) = recipient.call{value: bal}("");
-        require(ok, "NativeModule: native send failed");
+        if (!ok) revert NativeSendFailed();
     }
 }
-

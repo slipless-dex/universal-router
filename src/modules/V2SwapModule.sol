@@ -15,25 +15,23 @@ abstract contract V2SwapModule {
     using SafeERC20 for IERC20;
 
     error V2InsufficientOutput();
+    error V2InvalidPath();
 
-    /**
-     * @dev Encoded params:
-     *   address recipient, uint256 amountIn, uint256 amountOutMin, address[] path
-     */
+    // inputs = abi.encode(address recipient, uint256 amountIn, uint256 amountOutMin, address[] path)
     function _v2SwapExactIn(bytes calldata inputs) internal {
         (address recipient, uint256 amountIn, uint256 amountOutMin, address[] memory path) =
             abi.decode(inputs, (address, uint256, uint256, address[]));
-        require(path.length >= 2, "V2: path length");
+        if (path.length < 2) revert V2InvalidPath();
 
-        // Pull the first token in if it's not already in this contract.
         IERC20(path[0]).safeTransfer(_pairFor(path[0], path[1]), amountIn);
 
         uint256 lastAmount = amountIn;
-        for (uint256 i = 0; i < path.length - 1;) {
+        uint256 lastHop = path.length - 1;
+        for (uint256 i = 0; i < lastHop;) {
             address pair = _pairFor(path[i], path[i + 1]);
             (uint256 reserveIn, uint256 reserveOut) = _getReserves(pair, path[i]);
             uint256 amountOut = _getAmountOut(lastAmount, reserveIn, reserveOut);
-            address recv = i == path.length - 2 ? recipient : _pairFor(path[i + 1], path[i + 2]);
+            address recv = i == lastHop - 1 ? recipient : _pairFor(path[i + 1], path[i + 2]);
             (uint256 amount0Out, uint256 amount1Out) =
                 path[i] == ISlipplessV2Pair(pair).token0() ? (uint256(0), amountOut) : (amountOut, uint256(0));
             ISlipplessV2Pair(pair).swap(amount0Out, amount1Out, recv, "");
@@ -43,10 +41,11 @@ abstract contract V2SwapModule {
         if (lastAmount < amountOutMin) revert V2InsufficientOutput();
     }
 
+    // 30 bps fee
     function _getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
         internal pure returns (uint256)
     {
-        uint256 amountInWithFee = amountIn * 9970; // 30 bps default fee
+        uint256 amountInWithFee = amountIn * 9970;
         uint256 numerator = amountInWithFee * reserveOut;
         uint256 denominator = reserveIn * 10_000 + amountInWithFee;
         return numerator / denominator;
@@ -57,6 +56,5 @@ abstract contract V2SwapModule {
         return tokenIn == ISlipplessV2Pair(pair).token0() ? (uint256(r0), uint256(r1)) : (uint256(r1), uint256(r0));
     }
 
-    /// @notice Override in deployment with the canonical pair-address derivation.
-    function _pairFor(address /*a*/, address /*b*/) internal view virtual returns (address);
+    function _pairFor(address, address) internal view virtual returns (address);
 }

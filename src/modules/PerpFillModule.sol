@@ -33,10 +33,6 @@ abstract contract PerpFillModule {
         lop = lop_;
     }
 
-    /**
-     * @dev Encoded params:
-     *   ISlipplessLOP.FillParams params
-     */
     function _perpFillExactIn(bytes calldata inputs) internal {
         ISlipplessLOP.FillParams memory params = abi.decode(inputs, (ISlipplessLOP.FillParams));
         ISlipplessLOP(lop).fill(params);

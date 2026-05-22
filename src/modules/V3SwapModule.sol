@@ -20,28 +20,21 @@ interface ISlipplessV3Pool {
 abstract contract V3SwapModule is ISlipplessV3SwapCallback {
     error V3InvalidAmountDelta();
     error V3InsufficientOutput();
+    error V3NotConfigured();
 
-    /**
-     * @dev Encoded params:
-     *   address recipient, uint256 amountIn, uint256 amountOutMin,
-     *   bytes path  (token0 || fee || token1 || fee || token2 ...)
-     */
+    // inputs = abi.encode(address recipient, uint256 amountIn, uint256 amountOutMin,
+    //                    bytes path  (token0 || fee || token1 || fee || token2 ...))
     function _v3SwapExactIn(bytes calldata inputs) internal {
         (address recipient, uint256 amountIn, uint256 amountOutMin, bytes memory path) =
             abi.decode(inputs, (address, uint256, uint256, bytes));
-        // Implementation defers to the pool factory + path decoder. The
-        // production contract uses inline assembly for a 30% gas saving;
-        // here we leave a clearly-typed body so the data flow is auditable.
         recipient; amountIn; amountOutMin; path;
-        revert("V3SwapModule: deployment-specific");
+        revert V3NotConfigured();
     }
 
-    function slipplessV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata /*data*/)
+    function slipplessV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata)
         external
         override
     {
         if (amount0Delta <= 0 && amount1Delta <= 0) revert V3InvalidAmountDelta();
-        // Production: pull from msg.sender (pool) using the encoded payer
-        // and path. Keeping the body minimal here so the surface is clear.
     }
 }
